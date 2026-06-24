@@ -5,7 +5,7 @@
 ### 架构图
 
 ```mermaid
-flowchart TD
+flowchart LR
     Start["用户提问<br/>帮我创建 hello.py"] --> Messages["messages[]<br/>累积式消息列表"]
     Messages --> LLM["大模型 LLM<br/>读取消息历史<br/>判断是否需要工具<br/>返回 stop_reason"]
     LLM --> Decision{"stop_reason<br/>== tool_use ?"}
