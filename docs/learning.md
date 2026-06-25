@@ -15,3 +15,9 @@
 ## Permission
 ### 架构图
 ![截图说明](./images/permission-overview.svg)
+核心：在工具执行之前进行权限检查
+
+## Hooks
+### 架构图
+![截图说明](./images/hooks-overview.svg)
+核心：为了防止在主循环里加入过多的扩展需求，把这些统一实现成钩子

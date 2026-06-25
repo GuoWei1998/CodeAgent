@@ -4,6 +4,7 @@ import subprocess
 from dotenv import load_dotenv
 from module.tools import run_read,run_write,run_edit,run_glob,run_bash,TOOLS,TOOL_HANDLERS
 from module.permission import check_permission
+from module.hook import register_hook,trigger_hook,log_hook,large_output_hook
 
 load_dotenv() #加载环境变量
 
@@ -19,6 +20,11 @@ if not MODEL:
     raise RuntimeError("Missing MODEL_ID environment variable")
 MAX_STEPS = int(os.getenv("MAX_STEPS", "100"))
 SYSTEM = f"You are a coding agent at {os.getcwd()}. Use bash to solve tasks. Act, don't explain."
+
+# 注册hook
+register_hook("PreToolUse", check_permission)
+register_hook("PreToolUse", log_hook)
+register_hook("PostToolUse", large_output_hook)
 
 def agent_loop(user_input, messages: list):
     step_count = 0
@@ -40,17 +46,15 @@ def agent_loop(user_input, messages: list):
         results = []
         for block in response.content:
             if block.type == "tool_use":
-                print(f"\033[33m> {block.name}\033[0m")
+                force = trigger_hook("PreToolUse", block)
                 # 6、权限检查
-                if not check_permission(block):
-                    results.append({
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": "Error: Permission denied",
-                    })
+                if force:
+                    # hook returned a message → inject it and continue
+                    messages.append({"role": "user", "content": force})
                     continue
                 handler = TOOL_HANDLERS.get(block.name)
                 output = handler(**block.input) if handler else f"Unknown: {block.name}"
+                trigger_hook("PostToolUse", block, output)
                 print(output[:200])
                 results.append({
                     "type": "tool_result",

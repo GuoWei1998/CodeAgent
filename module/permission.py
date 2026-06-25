@@ -32,7 +32,7 @@ def check_permission(block) -> bool:
         command = block.input.get("command", "")
         for denied in DENY_LIST:
             if denied in command:
-                return False
+                return "Permission denied by deny list"
 
     # 2、规则匹配
     reason = None
@@ -44,6 +44,6 @@ def check_permission(block) -> bool:
     if reason:
         decision=ask_user(block.name, block.input, reason)
         if decision == "deny":
-            return False
+            return "Permission denied by user"
         
-    return True
+    return None
