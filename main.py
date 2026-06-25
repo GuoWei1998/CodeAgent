@@ -3,6 +3,7 @@ import os
 import subprocess
 from dotenv import load_dotenv
 from module.tools import run_read,run_write,run_edit,run_glob,run_bash,TOOLS,TOOL_HANDLERS
+from module.permission import check_permission
 
 load_dotenv() #加载环境变量
 
@@ -39,8 +40,15 @@ def agent_loop(user_input, messages: list):
         results = []
         for block in response.content:
             if block.type == "tool_use":
-                # 执行工具调用
                 print(f"\033[33m> {block.name}\033[0m")
+                # 6、权限检查
+                if not check_permission(block):
+                    results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": "Error: Permission denied",
+                    })
+                    continue
                 handler = TOOL_HANDLERS.get(block.name)
                 output = handler(**block.input) if handler else f"Unknown: {block.name}"
                 print(output[:200])
